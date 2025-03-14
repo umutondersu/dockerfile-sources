@@ -2,10 +2,9 @@ package input
 
 import (
 	"bufio"
+	"fmt"
 	"io"
-	"log/slog"
 	"net/http"
-	"os"
 	"regexp"
 	"strings"
 )
@@ -16,20 +15,16 @@ type Source struct {
 	CommitSha string
 }
 
-var logger = slog.New(slog.NewTextHandler(os.Stdout, nil))
-
 func GetHTTPResponseBody(url string) (string, error) {
 	response, err := http.Get(url)
 	if err != nil {
-		logger.Error("Error fetching the URL", slog.String("error", err.Error()))
-		return "", err
+		return "", fmt.Errorf("Error fetching the URL: %w", err)
 	}
 	defer response.Body.Close()
 
 	body, err := io.ReadAll(response.Body)
 	if err != nil {
-		logger.Error("Eror reading the response body", slog.String("error", err.Error()))
-		return "", err
+		return "", fmt.Errorf("Eror reading the response body: %w", err)
 	}
 
 	return string(body), nil
