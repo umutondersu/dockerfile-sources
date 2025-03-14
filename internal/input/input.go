@@ -11,39 +11,32 @@ import (
 )
 
 type Source struct {
-	repository string
-	commitSha  string
+	Repository string
+	CommitSha  string
 }
 
 var logger = slog.New(slog.NewTextHandler(os.Stdout, nil))
 
-func FetchURLContent(url string) ([]byte, error) {
-	body := []byte{}
-
+func GetHTTPResponseBody(url string) (string, error) {
 	// Send a GET request
 	response, err := http.Get(url)
 	if err != nil {
 		logger.Error("Error fetching the URL", slog.String("error", err.Error()))
-		return body, err
+		return "", err
 	}
 	defer response.Body.Close()
 
 	// Read the response body
-	body, err = io.ReadAll(response.Body)
+	body, err := io.ReadAll(response.Body)
 	if err != nil {
 		logger.Error("Eror reading the response body", slog.String("error", err.Error()))
-		return body, err
+		return "", err
 	}
 
-	return body, nil
+	return string(body), nil
 }
 
-func ParseRepositorySources(url string) []Source {
-	body, err := FetchURLContent(url)
-	if err != nil {
-		return nil
-	}
-
+func ParseRepositorySources(body string) []Source {
 	// Define the regex pattern
 	pattern := `^https://github\.com/[a-zA-Z0-9_.-]+/[a-zA-Z0-9_.-]+\.git\s+[0-9a-f]{40}$`
 	re := regexp.MustCompile(pattern)
@@ -52,7 +45,7 @@ func ParseRepositorySources(url string) []Source {
 	var sources []Source
 
 	// Scan the body line by line
-	scanner := bufio.NewScanner(strings.NewReader(string(body)))
+	scanner := bufio.NewScanner(strings.NewReader(body))
 	for scanner.Scan() {
 		line := scanner.Text()
 		if re.MatchString(line) {
@@ -60,8 +53,8 @@ func ParseRepositorySources(url string) []Source {
 			parts := strings.Fields(line)
 			if len(parts) == 2 {
 				s := Source{
-					repository: parts[0],
-					commitSha:  parts[1],
+					Repository: parts[0],
+					CommitSha:  parts[1],
 				}
 				sources = append(sources, s)
 			}
