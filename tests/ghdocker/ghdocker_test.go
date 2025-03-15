@@ -67,7 +67,6 @@ func TestGetDockerFiles(t *testing.T) {
 					Path:   "dockerfiles/Dockerfile",
 					Images: []string{"quay.io/app-sre/qontract-reconcile-base:0.2.1"},
 				},
-
 				{
 					Source: &allSources[1],
 					Path:   "jiralert/Dockerfile",

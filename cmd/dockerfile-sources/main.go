@@ -6,6 +6,7 @@ import (
 
 	"github.com/umutondersu/dockerfile-sources/internal/ghdocker"
 	"github.com/umutondersu/dockerfile-sources/internal/input"
+	"github.com/umutondersu/dockerfile-sources/internal/jsonoutput"
 )
 
 func main() {
@@ -28,5 +29,17 @@ func main() {
 		return
 	}
 
-	fmt.Println(dockerfiles)
+	output, err := jsonoutput.Convert(dockerfiles)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	jsonStr, err := output.ToJSON()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(jsonStr)
 }
