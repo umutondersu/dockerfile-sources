@@ -42,7 +42,7 @@ func NewClient(token string) *Client {
 	}
 }
 
-func (c *Client) GetDockerfiles(ctx context.Context, sources ...input.Source) ([]DockerFile, error) {
+func (c *Client) GetDockerfiles(ctx context.Context, sources []input.Source) ([]DockerFile, error) {
 	var dockerfiles []DockerFile
 
 	for _, source := range sources {

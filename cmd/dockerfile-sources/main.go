@@ -18,12 +18,11 @@ func main() {
 	}
 
 	sources := input.ParseRepositorySources(body)
-	source := sources[0]
 
 	ctx := context.Background()
 	c := ghdocker.NewClient("")
 
-	dockerfiles, err := c.GetDockerfiles(ctx, source)
+	dockerfiles, err := c.GetDockerFiles(ctx, sources)
 	if err != nil {
 		fmt.Println(err)
 		return
