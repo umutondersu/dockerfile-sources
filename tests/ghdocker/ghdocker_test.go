@@ -7,21 +7,12 @@ import (
 
 	"github.com/umutondersu/dockerfile-sources/internal/ghdocker"
 	"github.com/umutondersu/dockerfile-sources/internal/input"
+	"github.com/umutondersu/dockerfile-sources/tests/testdata"
 )
 
 func TestGetDockerFiles(t *testing.T) {
-	allSources := []input.Source{
-		{
-			Owner:     "app-sre",
-			Repo:      "qontract-reconcile",
-			CommitSha: "30af65af14a2dce962df923446afff24dd8f123e",
-		},
-		{
-			Owner:     "app-sre",
-			Repo:      "container-images",
-			CommitSha: "c260deaf135fc0efaab365ea234a5b86b3ead404",
-		},
-	}
+	sources := testdata.TestSources
+	dockerFiles := testdata.TestDockerFiles
 
 	tests := []struct {
 		name          string
@@ -29,59 +20,19 @@ func TestGetDockerFiles(t *testing.T) {
 		expectedFiles []ghdocker.DockerFile
 	}{
 		{
-			name:    "Single Dockerfile, Single repo",
-			sources: allSources[0:1], expectedFiles: []ghdocker.DockerFile{
-				{
-					Source: &allSources[0],
-					Path:   "dockerfiles/Dockerfile",
-					Images: []string{"quay.io/app-sre/qontract-reconcile-base:0.2.1"},
-				},
-			},
+			name:          "Single Dockerfile, Single repo",
+			sources:       sources[0:1],
+			expectedFiles: dockerFiles[0:1],
 		},
 		{
-			name:    "Multiple dockerfiles, Single repo, Duplicate Images",
-			sources: allSources[1:2],
-			expectedFiles: []ghdocker.DockerFile{
-				{
-					Source: &allSources[1],
-					Path:   "jiralert/Dockerfile",
-					Images: []string{"registry.access.redhat.com/ubi8/go-toolset:latest", "registry.access.redhat.com/ubi8-minimal:8.2"},
-				},
-				{
-					Source: &allSources[1],
-					Path:   "qontract-reconcile-base/Dockerfile",
-					Images: []string{
-						"registry.access.redhat.com/ubi8/ubi:8.2",
-						"registry.access.redhat.com/ubi8/ubi:8.2",
-						"registry.access.redhat.com/ubi8/ubi:8.2",
-					},
-				},
-			},
+			name:          "Multiple dockerfiles, Single repo, Duplicate Images",
+			sources:       sources[1:2],
+			expectedFiles: dockerFiles[1:3],
 		},
 		{
-			name:    "Multiple dockerfiles, Multiple repos, Duplicate Images",
-			sources: allSources[0:2],
-			expectedFiles: []ghdocker.DockerFile{
-				{
-					Source: &allSources[0],
-					Path:   "dockerfiles/Dockerfile",
-					Images: []string{"quay.io/app-sre/qontract-reconcile-base:0.2.1"},
-				},
-				{
-					Source: &allSources[1],
-					Path:   "jiralert/Dockerfile",
-					Images: []string{"registry.access.redhat.com/ubi8/go-toolset:latest", "registry.access.redhat.com/ubi8-minimal:8.2"},
-				},
-				{
-					Source: &allSources[1],
-					Path:   "qontract-reconcile-base/Dockerfile",
-					Images: []string{
-						"registry.access.redhat.com/ubi8/ubi:8.2",
-						"registry.access.redhat.com/ubi8/ubi:8.2",
-						"registry.access.redhat.com/ubi8/ubi:8.2",
-					},
-				},
-			},
+			name:          "Multiple dockerfiles, Multiple repos, Duplicate Images",
+			sources:       sources[0:2],
+			expectedFiles: dockerFiles[0:3],
 		},
 	}
 
