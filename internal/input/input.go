@@ -11,7 +11,7 @@ import (
 
 type Source struct {
 	Owner     string
-	Name      string
+	Repo      string
 	CommitSha string
 }
 
@@ -44,7 +44,7 @@ func ParseRepositorySources(body string) []Source {
 		if len(matches) == 4 {
 			s := Source{
 				Owner:     matches[1],
-				Name:      matches[2],
+				Repo:      matches[2],
 				CommitSha: matches[3],
 			}
 			sources = append(sources, s)

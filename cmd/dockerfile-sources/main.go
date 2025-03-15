@@ -1,8 +1,10 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
+	"github.com/umutondersu/dockerfile-sources/internal/ghdocker"
 	"github.com/umutondersu/dockerfile-sources/internal/input"
 )
 
@@ -15,7 +17,17 @@ func main() {
 		return
 	}
 
-	result := input.ParseRepositorySources(body)
+	sources := input.ParseRepositorySources(body)
+	source := sources[0]
 
-	fmt.Println(result)
+	ctx := context.Background()
+	c := ghdocker.NewClient("")
+
+	dockerfiles, err := c.GetDockerfiles(ctx, source)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	fmt.Println(dockerfiles)
 }
