@@ -31,7 +31,7 @@ func TestParseRepositorySources(t *testing.T) {
 		{
 			name: "Empty body",
 			body: "",
-			want: []input.Source{},
+			want: nil,
 		},
 		{
 			name: "Typo in the link",
@@ -50,17 +50,17 @@ func TestParseRepositorySources(t *testing.T) {
 		{
 			name: "Url without .git suffix",
 			body: "https://github.com/kubernetes/kubernetes 8f0b92c0512afb25c8b2667ddfd1c7d5409903d3",
-			want: []input.Source{},
+			want: nil,
 		},
 		{
 			name: "Multiple Invalid entries",
 			body: "https://gitlab.com/user/repo.git abc123\nhttps://bitbucket.org/user/repo def456",
-			want: []input.Source{},
+			want: nil,
 		},
 		{
 			name: "Extra Spaces",
 			body: "  https://github.com/test/repo.git   abcdef1234567890abcdef1234567890abcdef12",
-			want: []input.Source{},
+			want: nil,
 		},
 		{
 			name: "Mixed valid and invalid formats",
@@ -73,18 +73,18 @@ func TestParseRepositorySources(t *testing.T) {
 		{
 			name: "Invalid commit SHA lengths",
 			body: "https://github.com/test/short.git abc123\nhttps://github.com/test/long.git 1234567890123456789012345678901234567890extra",
-			want: []input.Source{},
+			want: nil,
 		},
 		{
 			name: "Case sensitivity in URL",
 			body: "HTTPS://GITHUB.COM/org/repo.git abcdef1234567890abcdef1234567890abcdef12",
-			want: []input.Source{},
+			want: nil,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := input.ParseRepositorySources(tt.body)
-			if !reflect.DeepEqual(got, tt.want) && !(len(got) == 0 && len(tt.want) == 0) {
+			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ParseRepositorySources() = %v, want %v", got, tt.want)
 			}
 		})
