@@ -3,12 +3,13 @@ package ghdocker
 import (
 	"context"
 	"fmt"
-	"slices"
 	"strings"
 
 	"github.com/umutondersu/dockerfile-sources/internal/input"
 )
 
+// DockerFile represents a Dockerfile found in a repository
+// Multiple Dockerfiles can belong to a single Source
 type DockerFile struct {
 	Source *input.Source
 	Path   string
@@ -70,9 +71,7 @@ func extractImages(content string) []string {
 			continue
 		}
 
-		if !slices.Contains(images, curImage) {
-			images = append(images, curImage)
-		}
+		images = append(images, curImage)
 	}
 
 	return images

@@ -2,6 +2,8 @@ package ghdocker
 
 import (
 	"context"
+	"encoding/base64"
+	"fmt"
 
 	"github.com/google/go-github/v69/github"
 	"github.com/umutondersu/dockerfile-sources/internal/input"
