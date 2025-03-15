@@ -49,10 +49,8 @@ func TestParseRepositorySources(t *testing.T) {
 		},
 		{
 			name: "Url without .git suffix",
-			body: "https://github.com/kubernetes/kubernetes.git 8f0b92c0512afb25c8b2667ddfd1c7d5409903d3",
-			want: []input.Source{
-				{Owner: "kubernetes", Repo: "kubernetes", CommitSha: "8f0b92c0512afb25c8b2667ddfd1c7d5409903d3"},
-			},
+			body: "https://github.com/kubernetes/kubernetes 8f0b92c0512afb25c8b2667ddfd1c7d5409903d3",
+			want: []input.Source{},
 		},
 		{
 			name: "Multiple Invalid entries",
