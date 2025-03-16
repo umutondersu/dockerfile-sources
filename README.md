@@ -103,9 +103,10 @@ The application is organized into several packages, each with a specific respons
 - Validation of input data format
 - Graceful failure handling for GitHub API rate limits and network errors
 - Proper error propagation through the application
-- Smart retry mechanism with exponential backoff for transient failures
-- Detailed error types for better error handling and debugging:
-  - Rate limit errors with reset time information
-  - GitHub API errors with status codes and messages
-  - Network errors with automatic retries
-- Maximum retry duration of 30 seconds with increasing intervals
+- Robust error handling system with:
+  - Centralized error processing through `handleGitHubResponseError`
+  - Smart retry mechanism with exponential backoff for transient failures
+  - Standardized error patterns across all GitHub API calls
+  - Detailed error types for better debugging:
+  - Maximum retry duration of 30 seconds with 100ms initial interval
+  - Automatic backoff for retryable errors (500+ status codes)

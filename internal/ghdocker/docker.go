@@ -20,12 +20,12 @@ func (c *Client) GetDockerFiles(ctx context.Context, sources []input.Source) ([]
 	var dockerfiles []DockerFile
 
 	for _, source := range sources {
-		tree, _, err := c.client.Git.GetTree(ctx, source.Owner, source.Repo, source.CommitSha, true)
+		fileTree, err := c.getFileTree(ctx, source)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get repository tree for %s/%s: %w", source.Owner, source.Repo, err)
+			return nil, fmt.Errorf("Failed the get File Tree from %s/%s:%s: %w", source.Owner, source.Repo, source.CommitSha, err)
 		}
 
-		for _, entry := range tree.Entries {
+		for _, entry := range fileTree.Entries {
 			filePath := entry.GetPath()
 			// if entry type is 'blob' it means the entry is a file and not a directory
 			if entry.GetType() == "blob" && isDockerFile(filePath) {

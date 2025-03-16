@@ -72,26 +72,14 @@ func isRetryableError(resp *github.Response) bool {
 	return resp.StatusCode >= 500
 }
 
-func (c *Client) getFileContent(ctx context.Context, source input.Source, path string) (string, error) {
-	var content *github.RepositoryContent
-	var resp *github.Response
-	var err error
-
+// withBackoff executes an operation with exponential backoff
+func (c *Client) withBackoff(operation func() (*github.Response, error)) error {
 	b := backoff.NewExponentialBackOff()
 	b.MaxElapsedTime = 30 * time.Second
 	b.InitialInterval = 100 * time.Millisecond
 
-	operation := func() error {
-		content, _, resp, err = c.client.Repositories.GetContents(
-			ctx,
-			source.Owner,
-			source.Repo,
-			path,
-			&github.RepositoryContentGetOptions{
-				Ref: source.CommitSha,
-			},
-		)
-
+	return backoff.Retry(func() error {
+		resp, err := operation()
 		if err == nil {
 			return nil
 		}
@@ -101,35 +89,52 @@ func (c *Client) getFileContent(ctx context.Context, source input.Source, path s
 		}
 
 		return err
+	}, b)
+}
+
+func (c *Client) getFileTree(ctx context.Context, source input.Source) (*github.Tree, error) {
+	var tree *github.Tree
+	var resp *github.Response
+	var err error
+
+	operation := func() (*github.Response, error) {
+		tree, resp, err = c.client.Git.GetTree(ctx, source.Owner, source.Repo, source.CommitSha, true)
+		return resp, err
 	}
 
-	// Execute with backoff
-	err = backoff.Retry(operation, b)
-	if err != nil {
-		if resp != nil {
-			switch resp.StatusCode {
-			case http.StatusNotFound:
-				return "", fmt.Errorf("file not found: %s/%s:%s Path:%s", source.Owner, source.Repo, source.CommitSha, path)
-			case http.StatusForbidden:
-				if resp.Rate.Remaining == 0 {
-					return "", &ErrRateLimit{
-						ResetTime: resp.Rate.Reset.Time,
-					}
-				}
-				return "", &ErrGitHub{
-					StatusCode: resp.StatusCode,
-					Message:    "access forbidden",
-					Err:        err,
-				}
-			default:
-				return "", &ErrGitHub{
-					StatusCode: resp.StatusCode,
-					Message:    "failed to get content",
-					Err:        err,
-				}
-			}
+	if err := c.withBackoff(operation); err != nil {
+		notFoundMsg := fmt.Sprintf("repository or commit not found: %s/%s:%s", source.Owner, source.Repo, source.CommitSha)
+		defaultErrMsg := fmt.Sprintf("failed to get repository tree for %s/%s", source.Owner, source.Repo)
+		return nil, c.handleGitHubResponseError(resp, err, notFoundMsg, defaultErrMsg)
+	}
+
+	return tree, nil
+}
+
+func (c *Client) getFileContent(ctx context.Context, source input.Source, path string) (string, error) {
+	var content *github.RepositoryContent
+	var resp *github.Response
+	var err error
+
+	operation := func() (*github.Response, error) {
+		content, _, resp, err = c.client.Repositories.GetContents(
+			ctx,
+			source.Owner,
+			source.Repo,
+			path,
+			&github.RepositoryContentGetOptions{
+				Ref: source.CommitSha,
+			},
+		)
+		return resp, err
+	}
+
+	if err := c.withBackoff(operation); err != nil {
+		notFoundMsg := fmt.Sprintf("file not found: %s/%s:%s Path:%s", source.Owner, source.Repo, source.CommitSha, path)
+		defaultErrMsg := "failed to get content"
+		if err := c.handleGitHubResponseError(resp, err, notFoundMsg, defaultErrMsg); err != nil {
+			return "", err
 		}
-		return "", fmt.Errorf("failed to get content: %w", err)
 	}
 
 	decoded, err := base64.StdEncoding.DecodeString(*content.Content)
@@ -138,4 +143,36 @@ func (c *Client) getFileContent(ctx context.Context, source input.Source, path s
 	}
 
 	return string(decoded), nil
+}
+
+// handleGitHubResponseError processes GitHub API responses and standardizes error handling
+func (c *Client) handleGitHubResponseError(resp *github.Response, err error, notFoundMsg string, defaultErrMsg string) error {
+	if err == nil {
+		return nil
+	}
+
+	if resp != nil {
+		switch resp.StatusCode {
+		case http.StatusNotFound:
+			return fmt.Errorf("%s", notFoundMsg)
+		case http.StatusForbidden:
+			if resp.Rate.Remaining == 0 {
+				return &ErrRateLimit{
+					ResetTime: resp.Rate.Reset.Time,
+				}
+			}
+			return &ErrGitHub{
+				StatusCode: resp.StatusCode,
+				Message:    "access forbidden",
+				Err:        err,
+			}
+		default:
+			return &ErrGitHub{
+				StatusCode: resp.StatusCode,
+				Message:    defaultErrMsg,
+				Err:        err,
+			}
+		}
+	}
+	return fmt.Errorf("%s: %w", defaultErrMsg, err)
 }
