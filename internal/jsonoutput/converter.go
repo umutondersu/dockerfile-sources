@@ -12,7 +12,7 @@ type OutputData struct {
 	Data map[string]map[string][]string `json:"data"`
 }
 
-func Convert(dockerfiles []ghdocker.DockerFile) (*OutputData, error) {
+func MapDockerfilesToOutputData(dockerfiles []ghdocker.DockerFile) (*OutputData, error) {
 	output := &OutputData{
 		Data: make(map[string]map[string][]string),
 	}
@@ -33,11 +33,27 @@ func Convert(dockerfiles []ghdocker.DockerFile) (*OutputData, error) {
 	return output, nil
 }
 
-func (o *OutputData) ToJSON() (string, error) {
+func (o *OutputData) toJSON() (string, error) {
 	jsonBytes, err := json.MarshalIndent(o, "", "  ")
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal to JSON: %w", err)
 	}
 
 	return string(jsonBytes), nil
+}
+
+func GenerateJSONOutput(dockerfiles []ghdocker.DockerFile) (string, error) {
+	output, err := MapDockerfilesToOutputData(dockerfiles)
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+
+	jsonStr, err := output.toJSON()
+	if err != nil {
+		fmt.Println(err)
+		return "", err
+	}
+
+	return jsonStr, nil
 }

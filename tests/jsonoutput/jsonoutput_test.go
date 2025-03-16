@@ -9,7 +9,7 @@ import (
 	"github.com/umutondersu/dockerfile-sources/tests/testdata"
 )
 
-func TestConvert(t *testing.T) {
+func TestMapDockerfilesToOutputData(t *testing.T) {
 	dockerFiles := testdata.TestDockerFiles
 
 	tests := []struct {
@@ -67,7 +67,7 @@ func TestConvert(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			output, err := jsonoutput.Convert(tt.input)
+			output, err := jsonoutput.MapDockerfilesToOutputData(tt.input)
 			if err != nil {
 				t.Errorf("Convert() error = %v", err)
 				return
