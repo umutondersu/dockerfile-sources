@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/umutondersu/dockerfile-sources/internal/ghdocker"
 	"github.com/umutondersu/dockerfile-sources/internal/input"
@@ -10,9 +11,12 @@ import (
 )
 
 func main() {
-	// TODO: turn these into an input
-	url := "https://gist.githubusercontent.com/jmelis/c60e61a893248244dc4fa12b946585c4/raw/25d39f67f2405330a6314cad64fac423a171162c/sources.txt"
-	access_token := ""
+	url := os.Getenv("REPOSITORY_LIST_URL")
+	if url == "" {
+		fmt.Println("Error: REPOSITORY_LIST_URL environment variable is not set")
+		return
+	}
+	githubAccessToken := os.Getenv("GITHUB_ACCESS_TOKEN")
 
 	body, err := input.GetHTTPResponseBody(url)
 	if err != nil {
@@ -22,7 +26,7 @@ func main() {
 
 	sources := input.ParseRepositorySources(body)
 
-	c := ghdocker.NewClient(access_token)
+	c := ghdocker.NewClient(githubAccessToken)
 
 	dockerfiles, err := c.GetDockerFiles(context.Background(), sources)
 	if err != nil {
