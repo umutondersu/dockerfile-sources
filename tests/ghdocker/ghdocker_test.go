@@ -2,6 +2,7 @@ package ghdocker_test
 
 import (
 	"context"
+	"os"
 	"reflect"
 	"testing"
 
@@ -38,7 +39,7 @@ func TestGetDockerFiles(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			client := ghdocker.NewClient("")
+			client := ghdocker.NewClient(os.Getenv("GITHUB_ACCESS_TOKEN"))
 
 			files, err := client.GetDockerFiles(context.Background(), tt.sources)
 			if err != nil {
@@ -46,7 +47,7 @@ func TestGetDockerFiles(t *testing.T) {
 				return
 			}
 			if !reflect.DeepEqual(files, tt.expectedFiles) {
-				t.Errorf("GetDockerFiles() = %v, want %v", files, tt.expectedFiles)
+				t.Errorf("GetDockerFiles() = %v\n want %v", files, tt.expectedFiles)
 			}
 		})
 	}

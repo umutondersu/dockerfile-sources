@@ -3,7 +3,9 @@ package ghdocker
 import (
 	"context"
 	"fmt"
+	"sort"
 	"strings"
+	"sync"
 
 	"github.com/umutondersu/dockerfile-sources/internal/input"
 )
@@ -25,34 +27,57 @@ func (c *Client) GetDockerFiles(ctx context.Context, sources []input.Source) ([]
 			return nil, fmt.Errorf("Failed the get File Tree from %s/%s:%s: %w", source.Owner, source.Repo, source.CommitSha, err)
 		}
 
+		ch := make(chan string)
+		var wg sync.WaitGroup
+
 		for _, entry := range fileTree.Entries {
 			filePath := entry.GetPath()
 			// if entry type is 'blob' it means the entry is a file and not a directory
 			if entry.GetType() == "blob" && isDockerFile(filePath) {
-				content, err := c.getFileContent(ctx, source, filePath)
-				if err != nil {
-					return nil, fmt.Errorf("failed to get content for %s in %s/%s: %w", filePath, source.Owner, source.Repo, err)
-				}
-
-				Images := extractImages(content)
-
-				dockerfiles = append(dockerfiles, DockerFile{
-					Source: &source,
-					Path:   filePath,
-					Images: Images,
-				})
+				wg.Add(1)
+				go func(path string) {
+					_, err := c.getFileContent(ctx, source, path, ch, &wg)
+					if err != nil {
+						fmt.Printf("Error getting content for %s in %s/%s: %v\n", path, source.Owner, source.Repo, err)
+					}
+				}(filePath)
 			}
+		}
+
+		go func() {
+			wg.Wait()
+			close(ch)
+		}()
+
+		for content := range ch {
+			Path, Images := extractData(content)
+
+			dockerfiles = append(dockerfiles, DockerFile{
+				Source: &source,
+				Path:   Path,
+				Images: Images,
+			})
 		}
 	}
 
+	// Sort dockerfiles by path to ensure consistent ordering
+	sort.Slice(dockerfiles, func(i, j int) bool {
+		return dockerfiles[i].Path < dockerfiles[j].Path
+	})
 	return dockerfiles, nil
 }
 
-func extractImages(content string) []string {
+func extractData(content string) (string, []string) {
 	var images []string
+	var path string
 	lines := strings.Split(content, "\n")
 
-	for _, line := range lines {
+	for i, line := range lines {
+		if i == 0 {
+			path = line
+			continue
+		}
+
 		line = strings.TrimSpace(line)
 
 		if !strings.HasPrefix(strings.ToUpper(line), "FROM") {
@@ -74,7 +99,7 @@ func extractImages(content string) []string {
 		images = append(images, curImage)
 	}
 
-	return images
+	return path, images
 }
 
 func isDockerFile(path string) bool {

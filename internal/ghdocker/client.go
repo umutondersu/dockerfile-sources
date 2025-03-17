@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
@@ -111,10 +112,12 @@ func (c *Client) getFileTree(ctx context.Context, source input.Source) (*github.
 	return tree, nil
 }
 
-func (c *Client) getFileContent(ctx context.Context, source input.Source, path string) (string, error) {
+func (c *Client) getFileContent(ctx context.Context, source input.Source, path string, ch chan<- string, wg *sync.WaitGroup) (string, error) {
 	var content *github.RepositoryContent
 	var resp *github.Response
 	var err error
+
+	defer wg.Done()
 
 	operation := func() (*github.Response, error) {
 		content, _, resp, err = c.client.Repositories.GetContents(
@@ -142,7 +145,11 @@ func (c *Client) getFileContent(ctx context.Context, source input.Source, path s
 		return "", fmt.Errorf("failed to decode content: %w", err)
 	}
 
-	return string(decoded), nil
+	result := fmt.Sprintf("%v\n%v", *content.Path, string(decoded))
+
+	ch <- result
+
+	return result, nil
 }
 
 // handleGitHubResponseError processes GitHub API responses and standardizes error handling

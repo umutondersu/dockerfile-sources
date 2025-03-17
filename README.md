@@ -31,7 +31,6 @@ This tool scans Dockerfiles from specified GitHub repositories and generates a J
 
 ## Prerequisites
 
-- Go 1.x or higher
 - GitHub access token (optional, for higher API rate limits)
 
 ## Environment Variables
@@ -96,8 +95,19 @@ The application is organized into several packages, each with a specific respons
 2. For each repository:
    - Scans for Dockerfile presence
    - Extracts FROM statements to identify container images
+   - Uses goroutines and channels for efficient file content retrieval
+   - Implements wait groups to ensure all processing completes
 3. Aggregates results into a structured JSON output
 4. Prints final JSON to stdout
+
+### Performance Features
+
+- Concurrent processing of Dockerfile content
+- Channel-based communication for efficient data transfer
+- Wait group synchronization for parallel operations
+- Optimized memory usage through streaming processing
+
+### Other Features
 
 - Comprehensive error checking at each step
 - Validation of input data format
@@ -110,3 +120,4 @@ The application is organized into several packages, each with a specific respons
   - Detailed error types for better debugging:
   - Maximum retry duration of 30 seconds with 100ms initial interval
   - Automatic backoff for retryable errors (500+ status codes)
+  - Concurrent operation error capture and reporting
