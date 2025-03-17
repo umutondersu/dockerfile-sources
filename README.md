@@ -161,6 +161,7 @@ The application is organized into several packages, each with a specific respons
 
 - Comprehensive error checking at each step
 - Validation of input data format
+- Operation timeout control (default: 5 minutes)
 - Graceful failure handling for GitHub API rate limits and network errors
 - Proper error propagation through the application
 - Robust error handling system with:
@@ -171,3 +172,4 @@ The application is organized into several packages, each with a specific respons
   - Maximum retry duration of 30 seconds with 100ms initial interval
   - Automatic backoff for retryable errors (500+ status codes)
   - Concurrent operation error capture and reporting
+- Consistent exit codes for different error scenarios
