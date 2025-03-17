@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: dockerfile-sources-job
+spec:
+  template:
+    spec:
+      containers:
+        - name: dockerfile-sources
+          image: dockerfile-sources:latest
+          imagePullPolicy: Never
+          env:
+            - name: REPOSITORY_LIST_URL
+              value: "https://gist.githubusercontent.com/jmelis/c60e61a893248244dc4fa12b946585c4/raw/25d39f67f2405330a6314cad64fac423a171162c/sources.txt"
+            - name: GITHUB_ACCESS_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: github-token
+                  key: github-token
+      restartPolicy: Never
+  backoffLimit: 4
+  activeDeadlineSeconds: 600 # 10 minutes timeout

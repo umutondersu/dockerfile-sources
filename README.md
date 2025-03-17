@@ -31,7 +31,7 @@ This tool scans Dockerfiles from specified GitHub repositories and generates a J
 
 ## Prerequisites
 
-- GitHub access token (optional, for higher API rate limits)
+- GitHub access token with repo scope (optional, for private repository access and higher API rate limits)
 
 ## Environment Variables
 
@@ -47,6 +47,56 @@ git clone https://github.com/umutondersu/dockerfile-sources
 cd dockerfile-sources
 go build ./cmd/dockerfile-sources
 # dockerfile-sources
+```
+
+## Kubernetes Deployment
+
+The application can be deployed as a Kubernetes job. The necessary configuration files and helper scripts are provided in the `k8s` directory.
+
+### Prerequisites
+
+- Minikube
+- kubectl
+- Docker
+
+### Configuration Files
+
+- `k8s/job.yaml`: Kubernetes job configuration with resource limits and timeouts
+- `k8s/secret.yaml`: Template for using `GITHUB_ACCESS_TOKEN`
+- `k8s/scripts/`: Helper scripts for managing the job
+
+### Helper Scripts
+
+The following scripts are provided to simplify deployment and monitoring:
+
+- `startjob.sh`: Handles Minikube startup, builds Docker image, and deploys the job
+- `getjoblogs.sh`: Monitors job logs by automatically finding the pod
+- `endjob.sh`: Cleans up job resources
+
+### Running the Job
+
+1. Make the scripts executable:
+
+```bash
+chmod +x k8s/scripts/*.sh
+```
+
+2. Start the job:
+
+```bash
+./k8s/scripts/startjob.sh
+```
+
+3. Monitor logs (in a separate terminal):
+
+```bash
+./k8s/scripts/getjoblogs.sh
+```
+
+4. Clean up when done:
+
+```bash
+./k8s/scripts/endjob.sh
 ```
 
 ## Implementation Details
