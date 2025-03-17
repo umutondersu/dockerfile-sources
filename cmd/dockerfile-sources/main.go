@@ -47,16 +47,17 @@ func main() {
 
 	dockerfiles, err := c.GetDockerFiles(ctx, sources)
 	if err != nil {
-		if rateLimitErr, ok := err.(*ghdocker.ErrRateLimit); ok {
-			fmt.Printf("GitHub API rate limit exceeded. Reset time: %v\n", rateLimitErr.ResetTime)
+		switch e := err.(type) {
+		case *ghdocker.ErrRateLimit:
+			fmt.Printf("GitHub API rate limit exceeded. Reset time: %v\n", e.ResetTime)
+			os.Exit(1)
+		case *ghdocker.ErrGitHub:
+			fmt.Printf("GitHub API error (Status %d): %v\n", e.StatusCode, e.Message)
+			os.Exit(1)
+		default:
+			fmt.Printf("Error Getting DockerFiles: %v\n", err)
 			os.Exit(1)
 		}
-		if githubErr, ok := err.(*ghdocker.ErrGitHub); ok {
-			fmt.Printf("GitHub API error (Status %d): %v\n", githubErr.StatusCode, githubErr.Message)
-			os.Exit(1)
-		}
-		fmt.Printf("Error Getting DockerFiles: %v\n", err)
-		os.Exit(1)
 	}
 
 	jsonStr, err := jsonoutput.GenerateJSONOutput(dockerfiles)
