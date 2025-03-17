@@ -38,7 +38,7 @@ func main() {
 	body, err := input.GetHTTPResponseBody(repoURL)
 	if err != nil {
 		fmt.Printf("Error Getting Response Body: %v\n", err)
-		return
+		os.Exit(1)
 	}
 
 	sources := input.ParseRepositorySources(body)
@@ -63,7 +63,7 @@ func main() {
 	jsonStr, err := jsonoutput.GenerateJSONOutput(dockerfiles)
 	if err != nil {
 		fmt.Printf("Error Parsing to JSON: %v\n", err)
-		return
+		os.Exit(1)
 	}
 
 	fmt.Println(jsonStr)
