@@ -20,7 +20,7 @@ func main() {
 
 	body, err := input.GetHTTPResponseBody(url)
 	if err != nil {
-		fmt.Println("Error Getting Response Body: %w", err)
+		fmt.Printf("Error Getting Response Body: %v\n", err)
 		return
 	}
 
@@ -30,13 +30,13 @@ func main() {
 
 	dockerfiles, err := c.GetDockerFiles(context.Background(), sources)
 	if err != nil {
-		fmt.Println("Error Getting DockerFiles: %w", err)
+		fmt.Printf("Error Getting DockerFiles: %v\n", err)
 		return
 	}
 
 	jsonStr, err := jsonoutput.GenerateJSONOutput(dockerfiles)
 	if err != nil {
-		fmt.Println("Error Parsing to JSON: %w", err)
+		fmt.Printf("Error Parsing to JSON: %v\n", err)
 		return
 	}
 
