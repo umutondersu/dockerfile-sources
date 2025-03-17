@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
-
 	"github.com/google/go-github/v69/github"
 	"github.com/umutondersu/dockerfile-sources/internal/input"
 	"golang.org/x/oauth2"
