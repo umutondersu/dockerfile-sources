@@ -1,6 +1,6 @@
 #!/bin/bash
 
-IMAGE_NAME=dockerfile-sources:latest
+IMAGE_NAME=dockerfile-sources
 
 # Start minikube if not already running
 if ! minikube status >/dev/null 2>&1; then
@@ -9,11 +9,11 @@ if ! minikube status >/dev/null 2>&1; then
 fi
 
 # Set docker env to use minikube's docker daemon
-eval $(minikube -p minikube docker-env --shell=bash)
+eval "$(minikube -p minikube docker-env --shell=bash)"
 #NOTE: use --unset to revert back to local docker daemon
 
 # Check if image exists
-if ! docker images ${IMAGE_NAME}:latest | grep ${IMAGE_NAME} >/dev/null 2>&1; then
+if ! docker images "$IMAGE_NAME":latest | grep "$IMAGE_NAME" >/dev/null 2>&1; then
     echo "Building dockerfile-sources:latest image..."
     docker build -t dockerfile-sources:latest .
 else
@@ -33,6 +33,3 @@ if ! kubectl apply -f k8s/job.yaml; then
 fi
 
 echo "Job started successfully"
-
-
-
