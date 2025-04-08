@@ -173,3 +173,34 @@ The application is organized into several packages, each with a specific respons
   - Automatic backoff for retryable errors (500+ status codes)
   - Concurrent operation error capture and reporting
 - Consistent exit codes for different error scenarios
+
+## Possible Improvements
+
+### Error Handling
+
+- [ ] How ghdocker.getFileContent handles errors in concurrency: Indicating incomplete results, non-silent failure and Aggregating errors
+
+### Concurrency
+
+- [x] Use Full Concurrency
+
+- [x] Handle context cancellation of parent inside GetDockerFiles
+
+- [ ] For Concurrent process use a worker pool to prevent resource exhaustion
+
+### Misc
+
+- [x] getFileContent doesn't need to return the file content since its already sending it to the channel (It was like this for testing and pre-concurrency)
+- [x] Redundant use of methods while basic functions would suffice
+
+### API
+
+- [ ] Sync backoff algorithm with Github API's rate limits
+
+### K8s
+
+- [x] Image Name variable shouldn't have a tag in k8s/startjob.sh
+
+### Optional
+
+- [x] Use WithAuthToken() for Initializing the github client instead of importing auth2 (optional)

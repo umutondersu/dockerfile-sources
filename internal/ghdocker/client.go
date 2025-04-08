@@ -5,13 +5,11 @@ import (
 	"encoding/base64"
 	"fmt"
 	"net/http"
-	"sync"
 	"time"
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/google/go-github/v69/github"
 	"github.com/umutondersu/dockerfile-sources/internal/input"
-	"golang.org/x/oauth2"
 )
 
 // Custom error types for better error handling
@@ -43,11 +41,7 @@ func NewClient(token string) *Client {
 	var httpClient *github.Client
 
 	if token != "" {
-		ts := oauth2.StaticTokenSource(
-			&oauth2.Token{AccessToken: token},
-		)
-		tc := oauth2.NewClient(context.Background(), ts)
-		httpClient = github.NewClient(tc)
+		httpClient = github.NewClientWithEnvProxy().WithAuthToken(token)
 	} else {
 		httpClient = github.NewClient(nil)
 	}
@@ -92,31 +86,10 @@ func (c *Client) withBackoff(operation func() (*github.Response, error)) error {
 	}, b)
 }
 
-func (c *Client) getFileTree(ctx context.Context, source input.Source) (*github.Tree, error) {
-	var tree *github.Tree
-	var resp *github.Response
-	var err error
-
-	operation := func() (*github.Response, error) {
-		tree, resp, err = c.client.Git.GetTree(ctx, source.Owner, source.Repo, source.CommitSha, true)
-		return resp, err
-	}
-
-	if err := c.withBackoff(operation); err != nil {
-		notFoundMsg := fmt.Sprintf("repository or commit not found: %s/%s:%s", source.Owner, source.Repo, source.CommitSha)
-		defaultErrMsg := fmt.Sprintf("failed to get repository tree for %s/%s", source.Owner, source.Repo)
-		return nil, c.handleGitHubResponseError(resp, err, notFoundMsg, defaultErrMsg)
-	}
-
-	return tree, nil
-}
-
-func (c *Client) getFileContent(ctx context.Context, source input.Source, path string, ch chan<- string, wg *sync.WaitGroup) (string, error) {
+func (c *Client) getFileContent(ctx context.Context, source input.Source, path string) (string, error) {
 	var content *github.RepositoryContent
 	var resp *github.Response
 	var err error
-
-	defer wg.Done()
 
 	operation := func() (*github.Response, error) {
 		content, _, resp, err = c.client.Repositories.GetContents(
@@ -134,7 +107,7 @@ func (c *Client) getFileContent(ctx context.Context, source input.Source, path s
 	if err := c.withBackoff(operation); err != nil {
 		notFoundMsg := fmt.Sprintf("file not found: %s/%s:%s Path:%s", source.Owner, source.Repo, source.CommitSha, path)
 		defaultErrMsg := "failed to get content"
-		if err := c.handleGitHubResponseError(resp, err, notFoundMsg, defaultErrMsg); err != nil {
+		if err := handleGitHubResponseError(resp, err, notFoundMsg, defaultErrMsg); err != nil {
 			return "", err
 		}
 	}
@@ -144,15 +117,11 @@ func (c *Client) getFileContent(ctx context.Context, source input.Source, path s
 		return "", fmt.Errorf("failed to decode content: %w", err)
 	}
 
-	result := fmt.Sprintf("%v\n%v", *content.Path, string(decoded))
-
-	ch <- result
-
-	return result, nil
+	return string(decoded), nil
 }
 
 // handleGitHubResponseError processes GitHub API responses and standardizes error handling
-func (c *Client) handleGitHubResponseError(resp *github.Response, err error, notFoundMsg string, defaultErrMsg string) error {
+func handleGitHubResponseError(resp *github.Response, err error, notFoundMsg string, defaultErrMsg string) error {
 	if err == nil {
 		return nil
 	}

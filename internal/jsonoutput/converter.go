@@ -33,7 +33,7 @@ func MapDockerfilesToOutputData(dockerfiles []ghdocker.DockerFile) (*OutputData,
 	return output, nil
 }
 
-func (o *OutputData) toJSON() (string, error) {
+func toJSON(o *OutputData) (string, error) {
 	jsonBytes, err := json.MarshalIndent(o, "", "  ")
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal to JSON: %w", err)
@@ -49,7 +49,7 @@ func GenerateJSONOutput(dockerfiles []ghdocker.DockerFile) (string, error) {
 		return "", err
 	}
 
-	jsonStr, err := output.toJSON()
+	jsonStr, err := toJSON(output)
 	if err != nil {
 		fmt.Println(err)
 		return "", err
